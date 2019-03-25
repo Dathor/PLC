@@ -1,0 +1,166 @@
+{
+    module Grammar where
+    import Tokens
+}
+
+%name lang
+%tokenType { Token }
+%error { parseError }
+%token
+    "="         {TokEquals}
+    "<"         {TokLessThan}
+    ">"         {TokMoreThan}
+    "("         {TokLeftPar}
+    ";"         {TokSemiCol}
+    ")"         {TokRightPar}
+    "+"         {TokPlus}
+    "-"         {TokMinus}
+    "*"         {TokProd}
+    "/"         {TokDiv}
+    "%"         {TokMod}
+    "!="        {TokNotEq}
+    "return"    {TokReturn}
+    "=="        {TokEqEq}
+    "<="        {TokLessEq}
+    ">="        {TokMoreEq}
+    "true"      {TokTrue}
+    "false"     {TokFalse}
+    "^"         {TokPow}
+    "if"        {TokIf}
+    "else"      {TokElse}
+    "&&"        {TokAnd}
+    "||"        {TokOr}
+    "!"         {TokNot}
+    "stdout"    {TokStdout}
+    "stdin"     {TokStdin}
+    "->"        {TokArrow}
+    "let"       {TokLet}
+    "{"         {TokLeftBrace}
+    "}"         {TokRightBrace}
+    "["         {TokLeftBracket}
+    "]"         {TokRightBracket}
+    ","         {TokComma}
+    name        {TokAlphaNum $$}
+    num         {TokDigit}
+%%
+
+Program : MainCall FuncList {Program $1 $2}
+
+MainCall : "stdin" "->" Pipeline "->" "stdout" {MainCall $3}
+
+FuncList : FuncDecl {FuncList $1 FEmpty}
+           | FuncDecl FuncList {FuncList $1 $2}
+           | {FEmpty}
+
+FuncDecl : name "{" VarDeclList "->" StatementList "}" {FuncDecl $1 $3 $5}
+
+VarDeclList : Var {VarDeclList $1 VEmpty}
+            | Var "," VarDeclList {VarDeclList $1 $2}
+            | {VEmpty}
+
+StatementList : Statement ";" {StatementList $1 SEmpty}
+                | Statement ";" StatementList {StatementList $1 $3}
+                | {SEmpty}
+
+Var : name {Var $1}
+      | Array {Var $1}
+
+Array : "[" Var "]" {Array $2 AEmpty}
+         | "[" Var "," Array "]" {Array $2 $4}
+         | {AEmpty}
+
+Statement : "if" "(" BoolExp ")" StatementList "else" StatementList {SIfElse $3 $5 $7}
+            | "let" Var "=" Exp {SLet $2 $4}
+            | "return" Exp {SRet $2}
+
+Exp : Exp "*" Exp {EProd $1 $3}
+    | Exp "/" Exp {EDiv $1 $3}
+    | Exp "+" Exp {EPlus $1 $3}
+    | Exp "-" Exp {EMinus $1 $3}
+    | Exp "%" Exp {EMod $1 $3}
+    | Exp "^" Exp {EPow $1 $3}
+    | "(" Exp ")" {ExpPar $2}
+    | "-" Exp {ENeg $2}
+    | Var {Var $1}
+    | num {Val $1}
+    | BoolExp {BoolExp $1}
+
+BoolExp : BoolExp "&&" BoolExp {BAnd $1 $3}
+        | BoolExp "||" BoolExp {BOr $1 $3}
+        | BoolExp "==" BoolExp {BEq $1 $3}
+        | BoolExp "<=" BoolExp {BLT $1 $3}
+        | BoolExp ">=" BoolExp {BMT $1 $3}
+        | BoolExp "<" BoolExp {BLess $1 $3}
+        | BoolExp ">" BoolExp {BMore $1 $3}
+        | BoolExp "!=" BoolExp {BNotEq $1 $3}
+        | "!" BoolExp {BNot $2}
+        | "true" {BTrue}
+        | "false" {BFalse}
+
+Pipeline : name {Pipeline $1 PEmpty}
+         | name "->" Pipeline {Pipeline $1 $3}
+         | {PEmpty}
+
+{
+parseError :: [Token] -> a
+parseError _ = error "Parse error"
+
+data Program = Program MainCall FuncList
+               deriving (Show, Eq)
+
+data MainCall = MainCall Pipeline
+                deriving (Show, Eq)
+    
+data FuncList = FuncList FuncDecl FuncList | FEmpty
+                deriving (Show, Eq)
+
+data FuncDecl = FuncDecl String VarDeclList StatementList
+                deriving (Show, Eq)
+
+data VarDeclList = VarDeclList Var VarDeclList | VEmpty
+                    deriving (Show, Eq)
+
+data StatementList = StatementList Statement StatementList | SEmpty
+                     deriving (Show, Eq)
+            
+data Var = Var String | Var Array
+            deriving (Show, Eq)
+
+data Array = Array Var Array | AEmpty
+             deriving (Show, Eq)
+
+data Statement = SIfElse BoolExp StatementList StatementList 
+                | SLet Var Exp 
+                | SRet Exp
+                 deriving (Show, Eq)
+
+data Exp = EProd Exp Exp
+           | EDiv Exp Exp
+           | EPlus Exp Exp
+           | EMinus Exp Exp
+           | EMod Exp Exp
+           | EPow Exp Exp
+           | ExpPar Exp
+           | ENeg Exp
+           | Var Var
+           | Val Float
+           | BoolExp BoolExp
+           deriving (Show, Eq)
+
+data BoolExp = BAnd BoolExp BoolExp
+               | BOr BoolExp BoolExp
+               | BEq BoolExp BoolExp
+               | BLT BoolExp BoolExp
+               | BMT BoolExp BoolExp
+               | BLess BoolExp BoolExp
+               | BMore BoolExp BoolExp
+               | BNotEq BoolExp BoolExp
+               | BNot BoolExp
+               | BTrue
+               | BFalse
+               deriving (Show, Eq)
+
+data Pipeline = Pipeline String Pipeline | PEmpty
+                deriving (Show, Eq)
+}
+

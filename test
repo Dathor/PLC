@@ -1,0 +1,5 @@
+{-> let prev = 0} -> {x -> print prev; let prev = x} -> stdout
+{x -> print x; print x} -> stdout
+{x, y -> print x + 3*y} -> stdout
+{-> let prevSum = 0} -> {x -> let prevSum = prevSum + x; print prevSum} -> stdout
+{-> let prev1 = 0; let prev2 = 0} -> {x -> let prev1 = prev1+prev2+x; let prev2 = prev1 - prev2 - x; print prev1;}
