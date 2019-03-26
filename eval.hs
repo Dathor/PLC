@@ -25,16 +25,10 @@ unpackVarList :: VarList -> [Int] -> Env -> Env
 unpackVarList (VEmpty) ss env = env
 unpackVarList (VarList n v) (s:ss) env = unpackVarList v ss (update env n (Val s))
 
-splitStream:: [[Int]] -> [[Int]]
-splitStream ls | null (head ls) = [] 
-splitStream ls = [(map head ls)] ++ splitStream(map (drop 1) ls)
-
-
 executeFunc :: FuncDecl -> State -> [[Int]] -> [Int]
 executeFunc fDec s [] = []
 executeFunc (FuncDecl v e) (exp, env, k) (i:is) = (getOutputs state) ++ (executeFunc (FuncDecl v e) (flushEnv state) is)
                                                   where state = evalExp (e, (unpackVarList v i env), k)
-
 getOutputs :: State -> [Int]
 getOutputs (e,env,k) = map (value.snd) (filter (\(n, (Val v)) -> n == "output") env)
 
@@ -50,26 +44,11 @@ setEnvironment [fd] = executePreprocessor fd []
 setEnvironment (fd:fds) = executePreprocessor fd (getEnv(setEnvironment fds))
 
 executeProg :: [FuncDecl] -> [[Int]] -> [Int]
-executeProg fds input = executeFunc func (setEnvironment preprocessors) inputs
+executeProg fds input = executeFunc func (setEnvironment preprocessors) input
                          where preprocessors = filter (\(FuncDecl v e) -> v == (VEmpty)) fds
                                func = head (filter (\(FuncDecl v e) -> v /= (VEmpty)) fds)
-                               inputs = splitStream input
-
 getEnv :: State -> Env
 getEnv (e,env, k) = env
-
--- getStreamVars :: VarList -> [String]
--- getStreamVars (VEmpty) = []
--- getStreamVars (VarList n v) = [n] ++ (getStreamVars v)
-
-
--- setFuncState:: FuncDecl -> [Int] -> (State, [Exp], [String], [[Int]])
--- setFuncState (FuncDecl v e) input = (((Val 0), (unpackVarList v input), []), es, (getStreamVars v), [])
---                                      where es = unpackExpList e
-
--- setFuncStates:: [FuncDecl] -> [Int] -> FuncStates
--- setFuncStates [] input = []
--- setFuncStates (fd:fds) input = [(setFuncState fd input)] ++ (setFuncStates fds input)
 
 update :: Env -> String -> Exp -> Env
 update env n e = [(n,e)] ++ [el | el <- env, fst(el)/=n]
@@ -146,36 +125,3 @@ evalExp:: State -> State
 evalExp ((Val n), env, []) = ((Val n), env, [])
 evalExp (e, env, (PrintE n):k) = evalExp (e, ("output",(Val n)):env, k)
 evalExp s = evalExp(eval s)
-
--- evalFunc:: (State, [Exp], [String], [[Int]]) -> (State, [Exp], [String], [[Int]])
--- evalFunc ((e,env,k), [], v, out) = ((e,env,k), [], v, out)
--- evalFunc ((e1,env,k),(e2:es), vs, out) = evalFunc ((evalExp (e2,env,k)), es, vs, out)
-
--- printValues:: Env -> [Exp] -> [Int]
--- printValues env vs = map (value.snd) [e | e <- env, (Var v) <- vs, fst(e)==v]
-
--- -- setOutput :: Env -> [Int]
--- setOutput env = do output <- filter (\(n,v) -> n=="output") env
---                    env <- filter (\(n,v) -> n/="output") env
---                    return output
-
-
--- updateStreamVars :: State -> [Int] -> [String] -> State
--- updateStreamVars (e,env,k) [] [] = (e,env,k)
--- updateStreamVars (e,env,k) (val:values) (var:vars) = updateStreamVars (e,(update env var (Val val)),k) values vars
-
--- evalStream :: State -> (State, [Exp], [String]) -> [[Int]] -> State
--- evalStream s1 (s2,es,var) [] = s1
--- evalStream s1 (s2,es,var) (l:ls) = evalStream state (state, es, var) ls
---                                    where state = (evalFunc ((updateStreamVars s1 l var),es,var))
-
-
--- getEnv (e,env,k) = env
-
--- -- evalStream fd vs [] = []
--- -- evalStream fd vs s:ss = (evalFunc fd vs s) ++ (evalStream fd ss)
-
-
-
-
-

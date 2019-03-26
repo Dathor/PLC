@@ -1,0 +1,1 @@
+{-> let prevSum = 0} -> {x -> let prevSum = prevSum + x; print prevSum} -> stdout

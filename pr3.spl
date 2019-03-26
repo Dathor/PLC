@@ -1,0 +1,1 @@
+{x, y -> print x + 3*y} -> stdout
