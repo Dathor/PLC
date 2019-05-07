@@ -1,0 +1,1 @@
+{-> let diff = 0; let sum = 0} -> {x -> let diff = diff + x; let sum = sum + diff; print sum}

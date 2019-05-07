@@ -2,10 +2,10 @@
 DEPEND += tokens.hs grammar.hs eval.hs
 
 
-all: $(DEPEND) Lang
+all: $(DEPEND) MyInterpreter
 
-Lang: $(DEPEND) lang.hs
-	ghc lang.hs
+MyInterpreter: $(DEPEND) myinterpreter.hs
+	ghc myinterpreter.hs
 
 
 grammar.hs : grammar.y

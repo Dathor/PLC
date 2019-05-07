@@ -1,0 +1,1 @@
+{-> let prev1 = 0; let prev2 = 0} -> {x -> let prev2 = prev1; let prev1 = x; print prev2; print prev1} -> stdout
